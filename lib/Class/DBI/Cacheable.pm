@@ -5,7 +5,7 @@ use warnings;
 use base qw( Class::DBI::ObjectCache Class::DBI );
 use CLASS;
 
-our $VERSION = sprintf '%2d.%02d', q$Revision: 1.1.1.1 $ =~ /(\d+)\.(\d+)/;
+our $VERSION = 0.03;
 
 =head1 NAME
 

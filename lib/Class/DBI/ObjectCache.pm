@@ -6,7 +6,7 @@ use Cache::Cache qw( $EXPIRES_NOW $EXPIRES_NEVER );
 use Cache::FileCache;
 use CLASS;
 
-our $VERSION = sprintf '%2d.%02d', q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+our $VERSION = 0.03;
 our %CACHE_OBJ = ();
 
 =head1 NAME
@@ -98,7 +98,7 @@ sub getCacheKey {
     my $key_str = join(':', @key_values);
 
     # Return a new cache key for this data
-    my $key = new Nacho::Cachable::IndexKey(key => $key_str);
+    my $key = new Class::DBI::Cachable::IndexKey(key => $key_str);
     return $key;
 }
 
@@ -118,7 +118,7 @@ sub getCache {
 
     # If the supplied key is not a valid IndexKey object, retrieve
     # the cache key for it.
-    unless (UNIVERSAL::isa($key, 'Nacho::Cachable::IndexKey')) {
+    unless (UNIVERSAL::isa($key, 'Class::DBI::Cachable::IndexKey')) {
         $key = $class->getCacheKey($key);
     }
 
@@ -149,6 +149,23 @@ sub setCache {
 
     # Set the new key with the current object
     $self->CACHE->set($self->getCacheKey->{key}, $self, $self->EXPIRES());
+}
+
+=head2 $obj->removeCache( [$key] )
+
+Remove this object from the cache with the optionally supplied key.
+If no key is supplied, one is computed automatically.
+
+=cut
+
+sub removeCache {
+    my $self = shift;
+    my $key = shift || $self->getCacheKey;
+
+    return unless defined($self->CACHE);
+
+    # Remove the old key first, since the contents may have changed.
+    $self->CACHE->remove($key->{key});
 }
 
 =head2 CACHE()
@@ -242,7 +259,7 @@ sub CACHE_DEPTH {
     return 4;
 }
 
-package Nacho::Cachable::IndexKey;
+package Class::DBI::Cachable::IndexKey;
 sub new {
     my $pkg = shift;
     my $class = ref($pkg) || $pkg || __PACKAGE__;
