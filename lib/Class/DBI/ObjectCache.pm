@@ -6,7 +6,7 @@ use Cache::Cache qw( $EXPIRES_NOW $EXPIRES_NEVER );
 use Cache::FileCache;
 use CLASS;
 
-our $VERSION = sprintf '%2d.%02d', q$Revision: 1.1.1.1 $ =~ /(\d+)\.(\d+)/;
+our $VERSION = sprintf '%2d.%02d', q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 our %CACHE_OBJ = ();
 
 =head1 NAME
@@ -125,6 +125,7 @@ sub getCache {
     # If the key is valid, pull the value out of the local cache
     # and return what, if anything, it gives us.
     if (defined($key->{key})) {
+        return unless defined($class->CACHE);
         return $class->CACHE->get($key->{key});
     }
     return undef;
@@ -140,6 +141,8 @@ If no key is supplied, one is computed automatically.
 sub setCache {
     my $self = shift;
     my $key = shift || $self->getCacheKey;
+
+    return unless defined($self->CACHE);
 
     # Remove the old key first, since the contents may have changed.
     $self->CACHE->remove($key->{key});
@@ -169,24 +172,29 @@ sub CACHE {
 
     # Since no pre-defined cache object is available, construct
     # one using the class methods that define the root, etc.
-    $CACHE_OBJ{$class} = new Cache::FileCache({
-        cache_root => $class->can('CACHE_ROOT')
-            ? $class->CACHE_ROOT()
-            : '/tmp/' . $CLASS,
-        cache_depth => $class->can('CACHE_DEPTH')
-            ? $class->CACHE_DEPTH()
-            : 0,
-        namespace => $class,
-        default_expires_in  => $class->can('EXPIRES')
-            ? $class->EXPIRES()
-            : $EXPIRES_NEVER,
-        auto_purge_interval => $class->can('CACHE_PURGE_INTERVAL')
-            ? $class->CACHE_PURGE_INTERVAL()
-            : 600,
-        #max_size => $class->can('CACHE_SIZE')
-        #    ? $class->CACHE_SIZE()
-        #    : 20000,
-    }) or return undef;
+    eval {
+        $CACHE_OBJ{$class} = new Cache::FileCache({
+            cache_root => $class->can('CACHE_ROOT')
+                ? $class->CACHE_ROOT()
+                : '/tmp/' . $CLASS,
+            cache_depth => $class->can('CACHE_DEPTH')
+                ? $class->CACHE_DEPTH()
+                : 0,
+            namespace => $class,
+            default_expires_in  => $class->can('EXPIRES')
+                ? $class->EXPIRES()
+                : $EXPIRES_NEVER,
+            auto_purge_interval => $class->can('CACHE_PURGE_INTERVAL')
+                ? $class->CACHE_PURGE_INTERVAL()
+                : 600,
+            #max_size => $class->can('CACHE_SIZE')
+            #    ? $class->CACHE_SIZE()
+            #    : 20000,
+        }) or return undef;
+    };
+    if ($@) {
+        return undef;
+    }
 
     # Return the cache object
     return $CACHE_OBJ{$class};

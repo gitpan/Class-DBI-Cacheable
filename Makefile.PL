@@ -1,7 +1,7 @@
 use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'      => 'Class::DBI::Cacheable',
-    'VERSION'   => '0.01',
+    'VERSION'   => '0.02',
     'PREREQ_PM' => {
         DBI              => 0,
         Class::DBI       => 0,
